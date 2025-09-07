@@ -1,7 +1,6 @@
 import pygame
 import sys
 import time
-import random
 
 # Inicializar Pygame
 pygame.init()
@@ -56,7 +55,11 @@ MOVIMIENTOS_POSIBLES = {
 }
 
 class Cola:
-    """Implementación simple de una cola (queue) para algoritmos de búsqueda"""
+    """
+    Implementación simple de una cola (queue) para algoritmos de búsqueda.
+    Utilizada en los algoritmos de búsqueda en anchura (BFS) para gestionar
+    los nodos pendientes de exploración.
+    """
     def __init__(self):
         self.elementos = []
     
@@ -74,8 +77,8 @@ class Cola:
         """Verifica si la cola está vacía"""
         return len(self.elementos) == 0
 
-class SolitarioClavijas:
-    """Clase principal que gestiona la lógica del juego Solitario de Clavijas"""
+class Comesolo:
+    """Clase principal que gestiona la lógica del juego Comesolo (Solitario de Clavijas)"""
     
     def __init__(self, b):
         # Inicialización del estado del juego
@@ -518,11 +521,11 @@ class SolitarioClavijas:
         print("Selecciona una nueva posición inicial vacía")
 
 # Crear instancia del juego
-juego = SolitarioClavijas(None)
+juego = Comesolo(None)
 
 # Configurar ventana
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("Solitario de Clavijas - Basado en 8-puzzle")
+pygame.display.set_caption("Comesolo (Solitario de Clavijas) - Basado en 8-puzzle")
 
 # Botones modernos para la interfaz
 ancho_boton, alto_boton = 150, 50
@@ -621,7 +624,7 @@ def dibujar_tablero():
         titulo = "Resolviendo..."
         color_titulo = AZUL_PISTA
     else:
-        titulo = "Solitario de Clavijas"
+        titulo = "Comesolo (Solitario de Clavijas)"
         color_titulo = BLANCO
     
     # Dibujar título
@@ -732,7 +735,7 @@ reloj = pygame.time.Clock()
 
 # Mensaje de bienvenida en consola
 print("=" * 60)
-print("         SOLITARIO DE CLAVIJAS - BASADO EN 8-PUZZLE")
+print("         COMESOLO (SOLITARIO DE CLAVIJAS) - BASADO EN 8-PUZZLE")
 print("=" * 60)
 print("🎯 OBJETIVO: Eliminar todas las fichas excepto una")
 print("📋 REGLAS: Salta sobre una ficha adyacente a un espacio vacío")
