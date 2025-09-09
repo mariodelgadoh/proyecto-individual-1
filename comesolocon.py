@@ -8,14 +8,24 @@ class Comesolo:
     en modo consola, utilizando algoritmos de búsqueda similares al 8-puzzle.
     """
     
-    def __init__(self, posicion_vacia: int = None):
+    def __init__(self, posicion_vacia: str = None):
         """
         Inicializa el juego con una posición vacía específica.
         
         Args:
-            posicion_vacia (int): Posición inicial vacía (1-15). Si es None,
+            posicion_vacia (str): Posición inicial vacía (ej: 'a1', 'b3', 'c5'). Si es None,
                                 se pedirá al usuario.
         """
+        # Mapeo de posiciones a números (1-15)
+        self.posiciones = {
+            'a1': 1, 'a2': 2, 'b2': 3, 'a3': 4, 'b3': 5, 'c3': 6,
+            'a4': 7, 'b4': 8, 'c4': 9, 'd4': 10, 'a5': 11, 'b5': 12,
+            'c5': 13, 'd5': 14, 'e5': 15
+        }
+        
+        # Mapeo inverso de números a posiciones
+        self.numeros_a_posiciones = {v: k for k, v in self.posiciones.items()}
+        
         # Movimientos posibles - cada entrada representa (ficha_saltada, destino)
         self.movimientos_posibles = {
             1: [(2, 4), (3, 6)],
@@ -54,18 +64,31 @@ class Comesolo:
         if posicion_vacia is not None:
             self.inicializar_juego(posicion_vacia)
     
-    def inicializar_juego(self, posicion_vacia: int):
+    def convertir_a_numero(self, posicion: str) -> int:
+        """Convierte una posición en formato letra+número a número interno (1-15)."""
+        if posicion.lower() in self.posiciones:
+            return self.posiciones[posicion.lower()]
+        raise ValueError(f"Posición '{posicion}' no válida")
+    
+    def convertir_a_posicion(self, numero: int) -> str:
+        """Convierte un número interno (1-15) a formato letra+número."""
+        if 1 <= numero <= 15:
+            return self.numeros_a_posiciones[numero]
+        raise ValueError(f"Número '{numero}' fuera de rango")
+    
+    def inicializar_juego(self, posicion_vacia: str):
         """
         Configura el juego con una posición inicial vacía.
         
         Args:
-            posicion_vacia (int): Posición inicial vacía (1-15)
+            posicion_vacia (str): Posición inicial vacía (ej: 'a1', 'b3', 'c5')
         """
         self.posicion_vacia = posicion_vacia
+        pos_vacia_num = self.convertir_a_numero(posicion_vacia)
         
         # Estado inicial: todas las posiciones ocupadas excepto una vacía
         self.tablero = [1] * 16  # Índice 0 no se usa, posiciones 1-15
-        self.tablero[posicion_vacia] = 0
+        self.tablero[pos_vacia_num] = 0
         self.tablero[0] = -1  # Marcador para ignorar índice 0
         
         # Reiniciar contadores y estado del juego
@@ -104,29 +127,29 @@ class Comesolo:
         
         # Dibujar el tablero triangular con formato de triángulo equilátero
         # Fila 1 (posición 1)
-        print("        " + ("○" if tablero[1] == 0 else "●"))
+        print("        " + ("○" if tablero[1] == 0 else "●") + "       |||        a1")
         
         # Fila 2 (posiciones 2-3)
         print("       " + ("○ " if tablero[2] == 0 else "● ") + 
-                    ("○" if tablero[3] == 0 else "●"))
+                    ("○" if tablero[3] == 0 else "●") + "      |||       a2 b2")
         
         # Fila 3 (posiciones 4-6)
         print("      " + ("○ " if tablero[4] == 0 else "● ") + 
                     ("○ " if tablero[5] == 0 else "● ") + 
-                    ("○" if tablero[6] == 0 else "●"))
+                    ("○" if tablero[6] == 0 else "●") + "     |||      a3 b3 c3")
         
         # Fila 4 (posiciones 7-10)
         print("     " + ("○ " if tablero[7] == 0 else "● ") + 
                 ("○ " if tablero[8] == 0 else "● ") + 
                 ("○ " if tablero[9] == 0 else "● ") + 
-                ("○" if tablero[10] == 0 else "●"))
+                ("○" if tablero[10] == 0 else "●") + "    |||     a4 b4 c4 d4")
         
         # Fila 5 (posiciones 11-15)
         print("    " + ("○ " if tablero[11] == 0 else "● ") + 
                 ("○ " if tablero[12] == 0 else "● ") + 
                 ("○ " if tablero[13] == 0 else "● ") + 
                 ("○ " if tablero[14] == 0 else "● ") + 
-                ("○" if tablero[15] == 0 else "●"))
+                ("○" if tablero[15] == 0 else "●") + "   |||    a5 b5 c5 d5 e5")
         
         # Mostrar información del juego si es el tablero actual
         if tablero == self.tablero:
@@ -173,35 +196,44 @@ class Comesolo:
                         
         return lista_movimientos
     
-    def obtener_movimientos_desde_posicion(self, posicion: int) -> List[Tuple[int, int, int]]:
+    def obtener_movimientos_desde_posicion(self, posicion: str) -> List[Tuple[str, str, str]]:
         """
         Obtiene todos los movimientos posibles desde una posición específica.
         
         Args:
-            posicion (int): Posición desde la que se quiere mover
+            posicion (str): Posición desde la que se quiere mover (ej: 'a1', 'b3')
             
         Returns:
-            List[Tuple[int, int, int]]: Lista de movimientos (desde, sobre, hasta)
+            List[Tuple[str, str, str]]: Lista de movimientos (desde, sobre, hasta)
         """
         movimientos = []
         
+        # Convertir posición a número interno
+        try:
+            pos_num = self.convertir_a_numero(posicion)
+        except ValueError:
+            return []
+        
         # Verificar que haya una ficha en la posición
-        if self.tablero and self.tablero[posicion] == 1:
+        if self.tablero and self.tablero[pos_num] == 1:
             # Revisar todos los movimientos posibles desde esta posición
-            for sobre, hasta in self.movimientos_posibles.get(posicion, []):
+            for sobre_num, hasta_num in self.movimientos_posibles.get(pos_num, []):
                 # Verificar si el movimiento es válido
-                if self.tablero[sobre] == 1 and self.tablero[hasta] == 0:
-                    movimientos.append((posicion, sobre, hasta))
+                if self.tablero[sobre_num] == 1 and self.tablero[hasta_num] == 0:
+                    desde_str = self.convertir_a_posicion(pos_num)
+                    sobre_str = self.convertir_a_posicion(sobre_num)
+                    hasta_str = self.convertir_a_posicion(hasta_num)
+                    movimientos.append((desde_str, sobre_str, hasta_str))
                     
         return movimientos
     
-    def hacer_movimiento(self, desde: int, hasta: int) -> bool:
+    def hacer_movimiento(self, desde: str, hasta: str) -> bool:
         """
         Realiza un movimiento si es válido.
         
         Args:
-            desde (int): Posición de origen
-            hasta (int): Posición de destino
+            desde (str): Posición de origen (ej: 'a1', 'b3')
+            hasta (str): Posición de destino (ej: 'a1', 'b3')
             
         Returns:
             bool: True si el movimiento fue válido y se realizó, False en caso contrario
@@ -210,7 +242,15 @@ class Comesolo:
             print("El juego ya ha terminado. Inicia uno nuevo.")
             return False
         
-        print(f"\n🎯 INTENTANDO MOVIMIENTO: Ficha {desde} → Posición {hasta}")
+        print(f"\nINTENTANDO MOVIMIENTO: Ficha {desde} → Posición {hasta}")
+        
+        # Convertir posiciones a números internos
+        try:
+            desde_num = self.convertir_a_numero(desde)
+            hasta_num = self.convertir_a_numero(hasta)
+        except ValueError as e:
+            print(f"Error: {e}")
+            return False
         
         # Obtener movimientos válidos desde la posición
         movimientos_validos = self.obtener_movimientos_desde_posicion(desde)
@@ -225,14 +265,19 @@ class Comesolo:
         if movimiento_valido:
             mov_desde, mov_sobre, mov_hasta = movimiento_valido
             
-            print(f"✅ MOVIMIENTO VÁLIDO:")
+            print(f"MOVIMIENTO VÁLIDO:")
             print(f"   • Ficha {mov_desde} se mueve a posición {mov_hasta}")
             print(f"   • Elimina ficha {mov_sobre}")
             
+            # Convertir a números para realizar el movimiento
+            mov_desde_num = self.convertir_a_numero(mov_desde)
+            mov_sobre_num = self.convertir_a_numero(mov_sobre)
+            mov_hasta_num = self.convertir_a_numero(mov_hasta)
+            
             # Realizar el movimiento
-            self.tablero[mov_desde] = 0  # Quitar ficha original
-            self.tablero[mov_sobre] = 0   # Eliminar ficha saltada
-            self.tablero[mov_hasta] = 1   # Colocar ficha en destino
+            self.tablero[mov_desde_num] = 0  # Quitar ficha original
+            self.tablero[mov_sobre_num] = 0   # Eliminar ficha saltada
+            self.tablero[mov_hasta_num] = 1   # Colocar ficha en destino
             
             self.movimientos_realizados += 1
             self.verificar_fin_juego()
@@ -243,7 +288,7 @@ class Comesolo:
             
             return True
         else:
-            print(f"❌ MOVIMIENTO NO VÁLIDO: No existe ruta de {desde} a {hasta}")
+            print(f"MOVIMIENTO NO VÁLIDO: No existe ruta de {desde} a {hasta}")
             if movimientos_validos:
                 print("   Movimientos válidos desde esta posición:")
                 for mov_desde, mov_sobre, mov_hasta in movimientos_validos:
@@ -265,8 +310,9 @@ class Comesolo:
             self.juego_terminado = True
             self.ganado = True
             self.tiempo_transcurrido = time.time() - self.tiempo_inicio
-            posicion_final = next(i for i in range(1, 16) if self.tablero[i] == 1)
-            print(f"\n🎉 ¡FELICIDADES! ¡GANASTE!")
+            posicion_final_num = next(i for i in range(1, 16) if self.tablero[i] == 1)
+            posicion_final = self.convertir_a_posicion(posicion_final_num)
+            print(f"\n¡FELICIDADES! ¡GANASTE!")
             print(f"   • Ficha final en posición: {posicion_final}")
             print(f"   • Movimientos realizados: {self.movimientos_realizados}")
             print(f"   • Tiempo: {int(self.tiempo_transcurrido//60):02d}:{int(self.tiempo_transcurrido%60):02d}")
@@ -332,7 +378,7 @@ class Comesolo:
                 
             profundidad_actual += 1
             if objetivo_encontrado:
-                print(f'🎯 Objetivo encontrado a profundidad {profundidad_actual}')
+                print(f'Objetivo encontrado a profundidad {profundidad_actual}')
         
         return self.nodo_objetivo
     
@@ -366,7 +412,7 @@ class Comesolo:
             max_profundidad (int): Profundidad máxima de búsqueda
             
         Returns:
-            List[List[int]: Secuencia de estados que llevan a la solución
+            List[List[int]]: Secuencia de estados que llevan to the solución
         """
         # Reiniciar el árbol de búsqueda con el estado actual
         self.arbol_busqueda = {0: [set(), self.tablero.copy(), -1]}
@@ -407,7 +453,7 @@ class Comesolo:
             print("El juego ya ha terminado. Inicia uno nuevo.")
             return
             
-        print(f"\n🤖 INICIANDO RESOLUCIÓN AUTOMÁTICA...")
+        print(f"\nINICIANDO RESOLUCIÓN AUTOMÁTICA...")
         print("-" * 40)
         
         # Buscar solución desde el estado actual
@@ -419,8 +465,8 @@ class Comesolo:
             fichas_finales = sum(1 for i in range(1, 16) if estado_final[i] == 1)
             
             if fichas_finales == 1:
-                print(f"✅ Solución encontrada con {len(solucion) - 1} movimientos")
-                print("\n📋 SECUENCIA DE SOLUCIÓN:")
+                print(f"Solución encontrada con {len(solucion) - 1} movimientos")
+                print("\nSECUENCIA DE SOLUCIÓN:")
                 print("-" * 40)
                 
                 # Mostrar la secuencia de solución paso a paso
@@ -441,10 +487,13 @@ class Comesolo:
                             hasta = pos
                     
                     if desde and sobre and hasta:
-                        print(f"   Paso {i}: Ficha {desde} salta sobre ficha {sobre} → posición {hasta}")
+                        desde_str = self.convertir_a_posicion(desde)
+                        sobre_str = self.convertir_a_posicion(sobre)
+                        hasta_str = self.convertir_a_posicion(hasta)
+                        print(f"   Paso {i}: Ficha {desde_str} salta sobre ficha {sobre_str} → posición {hasta_str}")
                 
                 # Mostrar todos los tableros de la solución
-                print(f"\n🎯 VISUALIZACIÓN DE LA SOLUCIÓN:")
+                print(f"\nVISUALIZACIÓN DE LA SOLUCIÓN:")
                 for i, estado in enumerate(solucion):
                     self.dibujar_tablero_solucion(estado, i, len(solucion)-1)
                     if i < len(solucion) - 1:
@@ -457,9 +506,9 @@ class Comesolo:
                     self.movimientos_realizados += len(solucion) - 1
                     self.verificar_fin_juego()
             else:
-                print(f"⚠️  Solución parcial: quedarán {fichas_finales} fichas")
+                print(f"Solución parcial: quedarán {fichas_finales} fichas")
         else:
-            print("❌ No se encontró solución desde el estado actual")
+            print("No se encontró solución desde el estado actual")
     
     def verificar_solucion_existe(self):
         """Verifica si existe una solución para la posición inicial actual."""
@@ -467,7 +516,7 @@ class Comesolo:
             print("Primero inicializa el juego con una posición vacía.")
             return
             
-        print("\n🔍 VERIFICANDO SI EXISTE SOLUCIÓN...")
+        print("\nVERIFICANDO SI EXISTE SOLUCIÓN...")
         print("-" * 40)
         
         # Buscar solución completa
@@ -479,19 +528,20 @@ class Comesolo:
             fichas_finales = sum(1 for i in range(1, 16) if estado_final[i] == 1)
             
             if fichas_finales == 1:
-                print(f"✅ ¡SOLUCIÓN EXISTE!")
+                print(f"¡SOLUCIÓN EXISTE!")
                 print(f"   Número de movimientos necesarios: {len(solucion) - 1}")
-                posicion_final = next(i for i in range(1, 16) if estado_final[i] == 1)
+                posicion_final_num = next(i for i in range(1, 16) if estado_final[i] == 1)
+                posicion_final = self.convertir_a_posicion(posicion_final_num)
                 print(f"   Ficha final quedará en posición: {posicion_final}")
                 
                 # Mostrar el tablero final de la solución
-                print(f"\n🎯 TABLERO FINAL DE LA SOLUCIÓN:")
+                print(f"\nTABLERO FINAL DE la SOLUCIÓN:")
                 self.dibujar_tablero(estado_final)
             else:
-                print(f"❌ NO HAY SOLUCIÓN PERFECTA")
+                print(f"NO HAY SOLUCIÓN PERFECTA")
                 print(f"   Mejor resultado posible: {fichas_finales} fichas restantes")
         else:
-            print(f"❌ NO HAY SOLUCIÓN desde la posición inicial {self.posicion_vacia}")
+            print(f"NO HAY SOLUCIÓN desde la posición inicial {self.posicion_vacia}")
         
         print("-" * 40)
 
@@ -501,8 +551,8 @@ def mostrar_menu_principal():
     print("\n" + "="*60)
     print("         COMESOLO (SOLITARIO DE CLAVIJAS) - CONSOLA")
     print("="*60)
-    print("🎯 OBJETIVO: Eliminar todas las fichas excepto una")
-    print("📋 REGLAS: Salta sobre una ficha adyacente a un espacio vacío")
+    print("OBJETIVO: Eliminar todas las fichas excepto una")
+    print("REGLAS: Salta sobre una ficha adyacente a un espacio vacío")
     print("="*60)
     print("1. Iniciar nuevo juego")
     print("2. Verificar si existe solución")
@@ -515,7 +565,42 @@ def mostrar_menu_principal():
 
 def main():
     """Función principal del juego."""
-    juego = Comesolo()
+    # Verificar si se proporcionó un argumento de línea de comandos
+    if len(sys.argv) > 1:
+        try:
+            pos_vacia = sys.argv[1].lower()
+            
+            # Validar que la posición sea válida
+            posiciones_validas = ['a1', 'a2', 'b2', 'a3', 'b3', 'c3', 
+                                 'a4', 'b4', 'c4', 'd4', 'a5', 'b5', 
+                                 'c5', 'd5', 'e5']
+            
+            if pos_vacia not in posiciones_validas:
+                print("Error: Posición vacía no válida")
+                print("Posiciones válidas:", ", ".join(posiciones_validas))
+                sys.exit(1)
+                
+            # Crear juego con la posición especificada
+            juego = Comesolo(pos_vacia)
+            juego.dibujar_tablero()
+            
+            # Verificar si existe solución
+            juego.verificar_solucion_existe()
+            
+            # Preguntar si desea jugar
+            jugar = input("\n¿Deseas jugar interactivamente? (s/n): ").lower()
+            if jugar == 's':
+                # Continuar con el modo interactivo
+                pass
+            else:
+                sys.exit(0)
+                
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+    else:
+        # Modo interactivo normal
+        juego = Comesolo()
     
     while True:
         mostrar_menu_principal()
@@ -529,14 +614,19 @@ def main():
         if opcion == 1:
             # Iniciar nuevo juego
             try:
-                pos_vacia = int(input("Ingresa la posición inicial vacía (1-15): "))
-                if not 1 <= pos_vacia <= 15:
-                    print("La posición debe estar entre 1 and 15.")
+                pos_vacia = input("Ingresa la posición inicial vacía (ej: a1, b3, c5): ").lower()
+                posiciones_validas = ['a1', 'a2', 'b2', 'a3', 'b3', 'c3', 
+                                     'a4', 'b4', 'c4', 'd4', 'a5', 'b5', 
+                                     'c5', 'd5', 'e5']
+                
+                if pos_vacia not in posiciones_validas:
+                    print("Posición no válida. Posiciones válidas:", ", ".join(posiciones_validas))
                     continue
+                    
                 juego.inicializar_juego(pos_vacia)
                 juego.dibujar_tablero()
-            except ValueError:
-                print("Por favor, ingresa un número válido.")
+            except Exception as e:
+                print(f"Error: {e}")
         
         elif opcion == 2:
             # Verificar si existe solución
@@ -565,17 +655,13 @@ def main():
                 print("El juego ya ha terminado. Inicia uno nuevo.")
             else:
                 try:
-                    desde = int(input("Posición de la ficha a mover: "))
-                    hasta = int(input("Posición destino: "))
+                    desde = input("Posición de la ficha a mover (ej: a1, b3): ").lower()
+                    hasta = input("Posición destino (ej: a1, b3): ").lower()
                     
-                    if not 1 <= desde <= 15 or not 1 <= hasta <= 15:
-                        print("Las posiciones deben estar entre 1 y 15.")
-                        continue
-                        
                     if juego.hacer_movimiento(desde, hasta):
                         juego.dibujar_tablero()
-                except ValueError:
-                    print("Por favor, ingresa números válidos.")
+                except Exception as e:
+                    print(f"Error: {e}")
         
         elif opcion == 6:
             # Salir
