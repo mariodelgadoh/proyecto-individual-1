@@ -1,6 +1,6 @@
 import sys
+from typing import List, Tuple
 import time
-from typing import List, Tuple, Set, Dict, Optional
 
 class Comesolo:
     """
@@ -45,12 +45,19 @@ class Comesolo:
             15: [(10, 6), (14, 13)]
         }
         
+        # Reiniciar completamente el estado del juego
+        self.reiniciar_completamente()
+        
+        # Si se proporciona posición inicial, inicializar el juego
+        if posicion_vacia is not None:
+            self.inicializar_juego(posicion_vacia)
+    
+    def reiniciar_completamente(self):
+        """Reinicia completamente todos los datos del juego a su estado inicial."""
         # Estado del juego
         self.tablero = None
-        self.posicion_vacia = posicion_vacia
+        self.posicion_vacia = None
         self.movimientos_realizados = 0
-        self.tiempo_inicio = None
-        self.tiempo_transcurrido = 0
         self.juego_terminado = False
         self.ganado = False
         
@@ -59,10 +66,6 @@ class Comesolo:
         self.nodo_numero = 0
         self.nodo_objetivo = -100
         self.solucion_pasos = []
-        
-        # Inicializar el juego
-        if posicion_vacia is not None:
-            self.inicializar_juego(posicion_vacia)
     
     def convertir_a_numero(self, posicion: str) -> int:
         """Convierte una posición en formato letra+número a número interno (1-15)."""
@@ -93,8 +96,6 @@ class Comesolo:
         
         # Reiniciar contadores y estado del juego
         self.movimientos_realizados = 0
-        self.tiempo_inicio = time.time()
-        self.tiempo_transcurrido = 0
         self.juego_terminado = False
         self.ganado = False
         
@@ -156,17 +157,6 @@ class Comesolo:
             fichas_restantes = sum(1 for i in range(1, 16) if tablero[i] == 1)
             print(f"\n   Fichas restantes: {fichas_restantes}")
             print(f"   Movimientos realizados: {self.movimientos_realizados}")
-            
-            if self.tiempo_inicio and not self.juego_terminado:
-                self.tiempo_transcurrido = time.time() - self.tiempo_inicio
-            
-            minutos = int(self.tiempo_transcurrido // 60)
-            segundos = int(self.tiempo_transcurrido % 60)
-            print(f"   Tiempo: {minutos:02d}:{segundos:02d}")
-            
-            # Mostrar ejemplo del tablero con números
-            if self.movimientos_realizados == 0:
-                print(f"\n   EJEMPLO: Posición {self.posicion_vacia} está vacía (○)")
     
     def generar_movimientos(self, tablero: List[int]) -> List[List[int]]:
         """
@@ -280,21 +270,16 @@ class Comesolo:
             self.tablero[mov_hasta_num] = 1   # Colocar ficha en destino
             
             self.movimientos_realizados += 1
-            self.verificar_fin_juego()
             
-            # Mostrar estado del tablero
-            fichas_restantes = sum(1 for i in range(1, 16) if self.tablero[i] == 1)
-            print(f"   • Fichas restantes: {fichas_restantes}")
+            # Mostrar el tablero actualizado después del movimiento
+            print("\nTABLERO ACTUALIZADO:")
+            self.dibujar_tablero()
+            
+            self.verificar_fin_juego()
             
             return True
         else:
             print(f"MOVIMIENTO NO VÁLIDO: No existe ruta de {desde} a {hasta}")
-            if movimientos_validos:
-                print("   Movimientos válidos desde esta posición:")
-                for mov_desde, mov_sobre, mov_hasta in movimientos_validos:
-                    print(f"   • Saltar ficha {mov_sobre} → posición {mov_hasta}")
-            else:
-                print("   No hay movimientos válidos desde esta posición.")
             return False
     
     def verificar_fin_juego(self):
@@ -309,13 +294,11 @@ class Comesolo:
         if fichas_restantes == 1:
             self.juego_terminado = True
             self.ganado = True
-            self.tiempo_transcurrido = time.time() - self.tiempo_inicio
             posicion_final_num = next(i for i in range(1, 16) if self.tablero[i] == 1)
             posicion_final = self.convertir_a_posicion(posicion_final_num)
             print(f"\n¡FELICIDADES! ¡GANASTE!")
             print(f"   • Ficha final en posición: {posicion_final}")
             print(f"   • Movimientos realizados: {self.movimientos_realizados}")
-            print(f"   • Tiempo: {int(self.tiempo_transcurrido//60):02d}:{int(self.tiempo_transcurrido%60):02d}")
             return
         
         # Verificar si hay movimientos disponibles
@@ -323,7 +306,6 @@ class Comesolo:
         if not movimientos_disponibles:
             self.juego_terminado = True
             self.ganado = False
-            self.tiempo_transcurrido = time.time() - self.tiempo_inicio
             print(f"\n🔚 JUEGO TERMINADO")
             print(f"   • Fichas restantes: {fichas_restantes}")
             print(f"   • Movimientos realizados: {self.movimientos_realizados}")
@@ -412,7 +394,7 @@ class Comesolo:
             max_profundidad (int): Profundidad máxima de búsqueda
             
         Returns:
-            List[List[int]]: Secuencia de estados que llevan to the solución
+            List[List[int]]: Secuencia de estados que llevan a la solución
         """
         # Reiniciar el árbol de búsqueda con el estado actual
         self.arbol_busqueda = {0: [set(), self.tablero.copy(), -1]}
@@ -492,23 +474,28 @@ class Comesolo:
                         hasta_str = self.convertir_a_posicion(hasta)
                         print(f"   Paso {i}: Ficha {desde_str} salta sobre ficha {sobre_str} → posición {hasta_str}")
                 
-                # Mostrar todos los tableros de la solución
+                # Mostrar todos los tableros de la solución automáticamente
                 print(f"\nVISUALIZACIÓN DE LA SOLUCIÓN:")
                 for i, estado in enumerate(solucion):
                     self.dibujar_tablero_solucion(estado, i, len(solucion)-1)
                     if i < len(solucion) - 1:
-                        input("   Presiona Enter para ver el siguiente paso...")
+                        # Pausa breve entre pasos en lugar de esperar entrada
+                        time.sleep(1.5)
                 
-                # Aplicar la solución al juego actual
-                aplicar = input("\n¿Aplicar esta solución al juego? (s/n): ").lower()
-                if aplicar == 's':
-                    self.tablero = estado_final.copy()
-                    self.movimientos_realizados += len(solucion) - 1
-                    self.verificar_fin_juego()
+                # Aplicar la solución al juego actual automáticamente
+                self.tablero = estado_final.copy()
+                self.movimientos_realizados += len(solucion) - 1
+                self.verificar_fin_juego()
+                
+                # Pausa antes de regresar al menú principal
+                input("\nPresiona Enter para regresar al menú principal...")
+                return True
             else:
                 print(f"Solución parcial: quedarán {fichas_finales} fichas")
         else:
             print("No se encontró solución desde el estado actual")
+        
+        return False
     
     def verificar_solucion_existe(self):
         """Verifica si existe una solución para la posición inicial actual."""
@@ -535,7 +522,7 @@ class Comesolo:
                 print(f"   Ficha final quedará en posición: {posicion_final}")
                 
                 # Mostrar el tablero final de la solución
-                print(f"\nTABLERO FINAL DE la SOLUCIÓN:")
+                print(f"\nTABLERO FINAL DE LA SOLUCIÓN:")
                 self.dibujar_tablero(estado_final)
             else:
                 print(f"NO HAY SOLUCIÓN PERFECTA")
@@ -560,59 +547,31 @@ def mostrar_menu_principal():
     print("4. Mostrar tablero actual")
     print("5. Realizar movimiento")
     print("6. Salir")
+    print("0. Mostrar menú nuevamente")
     print("="*60)
 
 
 def main():
     """Función principal del juego."""
-    # Verificar si se proporcionó un argumento de línea de comandos
-    if len(sys.argv) > 1:
-        try:
-            pos_vacia = sys.argv[1].lower()
-            
-            # Validar que la posición sea válida
-            posiciones_validas = ['a1', 'a2', 'b2', 'a3', 'b3', 'c3', 
-                                 'a4', 'b4', 'c4', 'd4', 'a5', 'b5', 
-                                 'c5', 'd5', 'e5']
-            
-            if pos_vacia not in posiciones_validas:
-                print("Error: Posición vacía no válida")
-                print("Posiciones válidas:", ", ".join(posiciones_validas))
-                sys.exit(1)
-                
-            # Crear juego con la posición especificada
-            juego = Comesolo(pos_vacia)
-            juego.dibujar_tablero()
-            
-            # Verificar si existe solución
-            juego.verificar_solucion_existe()
-            
-            # Preguntar si desea jugar
-            jugar = input("\n¿Deseas jugar interactivamente? (s/n): ").lower()
-            if jugar == 's':
-                # Continuar con el modo interactivo
-                pass
-            else:
-                sys.exit(0)
-                
-        except Exception as e:
-            print(f"Error: {e}")
-            sys.exit(1)
-    else:
-        # Modo interactivo normal
-        juego = Comesolo()
+    juego = None
     
     while True:
+        # Mostrar el menú principal
         mostrar_menu_principal()
         
         try:
-            opcion = int(input("Selecciona una opción: "))
+            opcion = input("\nSelecciona una opción: ").strip()
+            
+            if opcion == '0':
+                continue
+                
+            opcion = int(opcion)
         except ValueError:
             print("Por favor, ingresa un número válido.")
             continue
         
         if opcion == 1:
-            # Iniciar nuevo juego
+            # Iniciar nuevo juego - siempre crea una nueva instancia limpia
             try:
                 pos_vacia = input("Ingresa la posición inicial vacía (ej: a1, b3, c5): ").lower()
                 posiciones_validas = ['a1', 'a2', 'b2', 'a3', 'b3', 'c3', 
@@ -623,33 +582,81 @@ def main():
                     print("Posición no válida. Posiciones válidas:", ", ".join(posiciones_validas))
                     continue
                     
-                juego.inicializar_juego(pos_vacia)
+                # IMPORTANTE: Crear nueva instancia completamente limpia
+                juego = Comesolo(pos_vacia)
                 juego.dibujar_tablero()
+                
+                # Continuar jugando hasta que el juego termine
+                while not juego.juego_terminado:
+                    accion = input("\nPresiona Enter para continuar jugando, '0' para volver al menú: ").strip()
+                    if accion == '0':
+                        break
+                    else:
+                        # Pedir movimiento
+                        try:
+                            desde = input("Posición de la ficha a mover (ej: a1, b3) o '0' para menú: ").lower()
+                            if desde == '0':
+                                break
+                                
+                            hasta = input("Posición destino (ej: a1, b3): ").lower()
+                            
+                            if juego.hacer_movimiento(desde, hasta):
+                                # El tablero ya se muestra dentro de hacer_movimiento()
+                                pass
+                        except Exception as e:
+                            print(f"Error: {e}")
+                
+                # Si el juego terminó, reiniciar completamente para el siguiente juego
+                if juego.juego_terminado:
+                    print(f"\n{'='*60}")
+                    if juego.ganado:
+                        print("¡JUEGO COMPLETADO CON ÉXITO!")
+                    else:
+                        print("JUEGO TERMINADO - SIN MOVIMIENTOS DISPONIBLES")
+                    print("Regresando al menú principal...")
+                    print("(Toda la información del juego se ha reiniciado)")
+                    print(f"{'='*60}")
+                    
+                    # IMPORTANTE: Reiniciar completamente el juego para empezar limpio
+                    juego = None
+                    input("\nPresiona Enter para continuar...")
+                
             except Exception as e:
                 print(f"Error: {e}")
         
         elif opcion == 2:
             # Verificar si existe solución
-            if juego.tablero is None:
+            if juego is None or juego.tablero is None:
                 print("Primero inicia un juego con la opción 1.")
             else:
                 juego.verificar_solucion_existe()
         
         elif opcion == 3:
             # Resolver automáticamente
-            if juego.tablero is None:
+            if juego is None or juego.tablero is None:
                 print("Primero inicia un juego con la opción 1.")
             else:
-                juego.resolver_automaticamente()
-                juego.dibujar_tablero()
+                if juego.resolver_automaticamente():
+                    # Si se resolvió con éxito, el juego terminó
+                    print(f"\n{'='*60}")
+                    print("¡JUEGO RESUELTO AUTOMÁTICAMENTE!")
+                    print("Regresando al menú principal...")
+                    print("(Toda la información del juego se ha reiniciado)")
+                    print(f"{'='*60}")
+                    
+                    # IMPORTANTE: Reiniciar completamente el juego
+                    juego = None
         
         elif opcion == 4:
             # Mostrar tablero actual
-            juego.dibujar_tablero()
+            if juego is None or juego.tablero is None:
+                print("Primero inicia un juego con la opción 1.")
+            else:
+                juego.dibujar_tablero()
         
         elif opcion == 5:
             # Realizar movimiento
-            if juego.tablero is None:
+            if juego is None or juego.tablero is None:
                 print("Primero inicia un juego con la opción 1.")
             elif juego.juego_terminado:
                 print("El juego ya ha terminado. Inicia uno nuevo.")
@@ -659,7 +666,24 @@ def main():
                     hasta = input("Posición destino (ej: a1, b3): ").lower()
                     
                     if juego.hacer_movimiento(desde, hasta):
-                        juego.dibujar_tablero()
+                        # El tablero ya se muestra dentro de hacer_movimiento()
+                        pass
+                        
+                    # Si el juego terminó después del movimiento, reiniciar completamente
+                    if juego.juego_terminado:
+                        print(f"\n{'='*60}")
+                        if juego.ganado:
+                            print("¡JUEGO COMPLETADO CON ÉXITO!")
+                        else:
+                            print("JUEGO TERMINADO - SIN MOVIMIENTOS DISPONIBLES")
+                        print("Regresando al menú principal...")
+                        print("(Toda la información del juego se ha reiniciado)")
+                        print(f"{'='*60}")
+                        
+                        # IMPORTANTE: Reiniciar completamente el juego
+                        juego = None
+                        input("\nPresiona Enter para continuar...")
+                        
                 except Exception as e:
                     print(f"Error: {e}")
         
@@ -669,7 +693,7 @@ def main():
             break
         
         else:
-            print("Opción no válida. Por favor, selecciona una opción del 1 al 6.")
+            print("Opción no válida. Por favor, selecciona una opción del 0 al 6.")
 
 
 if __name__ == "__main__":
