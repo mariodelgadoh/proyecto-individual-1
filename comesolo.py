@@ -26,6 +26,18 @@ FUENTE_MEDIANA = pygame.font.Font(None, 40)
 FUENTE_GRANDE = pygame.font.Font(None, 56)
 FUENTE_PEQUEÑA = pygame.font.Font(None, 24)
 
+# Mapeo de posiciones numéricas (1-15) a etiquetas alfanuméricas
+POSICIONES_ETIQUETAS = {
+    1: 'a1',   # Fila 1
+    2: 'a2', 3: 'b2',   # Fila 2
+    4: 'a3', 5: 'b3', 6: 'c3',   # Fila 3
+    7: 'a4', 8: 'b4', 9: 'c4', 10: 'd4',   # Fila 4
+    11: 'a5', 12: 'b5', 13: 'c5', 14: 'd5', 15: 'e5'   # Fila 5
+}
+
+# Mapeo inverso: de etiquetas alfanuméricas a posiciones numéricas
+ETIQUETAS_POSICIONES = {v: k for k, v in POSICIONES_ETIQUETAS.items()}
+
 # Coordenadas de las posiciones en el tablero triangular (15 posiciones)
 POSICIONES = {
     1: (500, 150),   # Fila 1
@@ -143,7 +155,7 @@ class Comesolo:
         self.solucion_existe = None
         
         print(f"\n{'='*60}")
-        print(f"JUEGO INICIADO - Posición inicial vacía: {posicion_vacia}")
+        print(f"JUEGO INICIADO - Posición inicial vacía: {POSICIONES_ETIQUETAS[posicion_vacia]}")
         print(f"{'='*60}")
         
         # Verificar inmediatamente si existe solución
@@ -167,7 +179,7 @@ class Comesolo:
                 posicion_final = next(i for i in range(1, 16) if estado_final[i] == 1)
                 print(f"✅ ¡SOLUCIÓN ENCONTRADA!")
                 print(f"   Número de movimientos necesarios: {len(solucion) - 1}")
-                print(f"   Ficha final quedará en posición: {posicion_final}")
+                print(f"   Ficha final quedará en posición: {POSICIONES_ETIQUETAS[posicion_final]}")
                 print("\n📋 SECUENCIA DE SOLUCIÓN:")
                 print("-" * 40)
                 
@@ -189,7 +201,7 @@ class Comesolo:
                             hasta = pos
                     
                     if desde and sobre and hasta:
-                        print(f"   Paso {i}: Ficha {desde} salta sobre ficha {sobre} → posición {hasta}")
+                        print(f"   Paso {i}: Ficha {POSICIONES_ETIQUETAS[sobre]} salta sobre ficha {POSICIONES_ETIQUETAS[desde]} → posición {POSICIONES_ETIQUETAS[hasta]}")
                 
             else:
                 self.solucion_existe = False
@@ -197,7 +209,7 @@ class Comesolo:
                 print(f"   Mejor resultado posible: {fichas_finales} fichas restantes")
         else:
             self.solucion_existe = False
-            print(f"❌ NO HAY SOLUCIÓN desde la posición inicial {self.posicion_inicial_vacia}")
+            print(f"❌ NO HAY SOLUCIÓN desde la posición inicial {POSICIONES_ETIQUETAS[self.posicion_inicial_vacia]}")
         
         print("-" * 40)
     
@@ -325,7 +337,7 @@ class Comesolo:
         if self.resolviendo:
             return False
         
-        print(f"\n🎯 INTENTANDO MOVIMIENTO: Ficha {desde} → Posición {hasta}")
+        print(f"\n🎯 INTENTANDO MOVIMIENTO: Ficha {POSICIONES_ETIQUETAS[desde]} → Posición {POSICIONES_ETIQUETAS[hasta]}")
         
         # Verificar si el movimiento está en la lista de movimientos válidos
         movimiento_valido = None
@@ -338,16 +350,13 @@ class Comesolo:
             mov_desde, mov_sobre, mov_hasta = movimiento_valido
             
             print(f"✅ MOVIMIENTO VÁLIDO:")
-            print(f"   • Ficha {mov_desde} se mueve a posición {mov_hasta}")
-            print(f"   • Elimina ficha {mov_sobre}")
-            print(f"   • Estado antes: Pos{mov_desde}={self.raiz[mov_desde]}, Pos{mov_sobre}={self.raiz[mov_sobre]}, Pos{mov_hasta}={self.raiz[mov_hasta]}")
+            print(f"   • Ficha {POSICIONES_ETIQUETAS[mov_desde]} se mueve a posición {POSICIONES_ETIQUETAS[mov_hasta]}")
+            print(f"   • Elimina ficha {POSICIONES_ETIQUETAS[mov_sobre]}")
             
             # Realizar el movimiento
             self.raiz[mov_desde] = 0  # Quitar ficha original
             self.raiz[mov_sobre] = 0   # Eliminar ficha saltada
             self.raiz[mov_hasta] = 1   # Colocar ficha en destino
-            
-            print(f"   • Estado después: Pos{mov_desde}={self.raiz[mov_desde]}, Pos{mov_sobre}={self.raiz[mov_sobre]}, Pos{mov_hasta}={self.raiz[mov_hasta]}")
             
             self.movimientos_jugador += 1
             self.verificar_fin_juego()
@@ -358,7 +367,7 @@ class Comesolo:
             
             return True
         else:
-            print(f"❌ MOVIMIENTO NO VÁLIDO: No existe ruta de {desde} a {hasta}")
+            print(f"❌ MOVIMIENTO NO VÁLIDO: No existe ruta de {POSICIONES_ETIQUETAS[desde]} a {POSICIONES_ETIQUETAS[hasta]}")
             return False
     
     def verificar_fin_juego(self):
@@ -376,7 +385,7 @@ class Comesolo:
             self.tiempo_transcurrido = time.time() - self.tiempo_inicio
             posicion_final = next(i for i in range(1, 16) if self.raiz[i] == 1)
             print(f"\n🎉 ¡FELICIDADES! ¡GANASTE!")
-            print(f"   • Ficha final en posición: {posicion_final}")
+            print(f"   • Ficha final en posición: {POSICIONES_ETIQUETAS[posicion_final]}")
             print(f"   • Movimientos realizados: {self.movimientos_jugador}")
             print(f"   • Tiempo: {int(self.tiempo_transcurrido//60):02d}:{int(self.tiempo_transcurrido%60):02d}")
             return
@@ -485,7 +494,7 @@ class Comesolo:
                         hasta = pos
                 
                 if desde and sobre and hasta:
-                    print(f"🤖 Paso {self.paso_solucion_actual + 1}: Ficha {desde} salta sobre {sobre} → {hasta}")
+                    print(f"🤖 Paso {self.paso_solucion_actual + 1}: Ficha {POSICIONES_ETIQUETAS[sobre]} salta sobre {POSICIONES_ETIQUETAS[desde]} → {POSICIONES_ETIQUETAS[hasta]}")
                 
                 self.movimientos_jugador += 1
                 self.paso_solucion_actual += 1
@@ -563,8 +572,8 @@ def dibujar_boton_moderno(rect, color, texto, hover=False, activo=True):
     rect_texto = texto_boton.get_rect(center=rect.center)
     pantalla.blit(texto_boton, rect_texto)
 
-def dibujar_clavija_moderna(x, y, radio, tiene_ficha, estado, pos_num):
-    """Dibuja una ficha con el estilo moderno y número"""
+def dibujar_clavija_moderna(x, y, radio, tiene_ficha, estado, etiqueta):
+    """Dibuja una ficha con el estilo moderno y etiqueta alfanumérica"""
     if tiene_ficha:
         # Dibujar efectos según el estado de la ficha
         if estado == 'selected':
@@ -584,10 +593,10 @@ def dibujar_clavija_moderna(x, y, radio, tiene_ficha, estado, pos_num):
         pygame.draw.circle(pantalla, ANILLO_CLARO, (x, y), radio + 5, 3)
         pygame.draw.circle(pantalla, CLAVIJA_AMARILLA, (x, y), radio)
         
-        # Dibujar número en la ficha
-        texto_numero = FUENTE_PEQUEÑA.render(str(pos_num), True, NEGRO)
-        rect_numero = texto_numero.get_rect(center=(x, y))
-        pantalla.blit(texto_numero, rect_numero)
+        # Dibujar etiqueta alfanumérica en la ficha
+        texto_etiqueta = FUENTE_PEQUEÑA.render(etiqueta, True, NEGRO)
+        rect_etiqueta = texto_etiqueta.get_rect(center=(x, y))
+        pantalla.blit(texto_etiqueta, rect_etiqueta)
         
     else:
         # Dibujar un hueco vacío
@@ -599,10 +608,10 @@ def dibujar_clavija_moderna(x, y, radio, tiene_ficha, estado, pos_num):
         pygame.draw.circle(pantalla, ANILLO_CLARO, (x, y), radio + 5, 3)
         pygame.draw.circle(pantalla, AGUJERO_OSCURO, (x, y), radio)
         
-        # Dibujar número en el hueco vacío
-        texto_numero = FUENTE_PEQUEÑA.render(str(pos_num), True, BLANCO)
-        rect_numero = texto_numero.get_rect(center=(x, y))
-        pantalla.blit(texto_numero, rect_numero)
+        # Dibujar etiqueta alfanumérica en el hueco vacío
+        texto_etiqueta = FUENTE_PEQUEÑA.render(etiqueta, True, BLANCO)
+        rect_etiqueta = texto_etiqueta.get_rect(center=(x, y))
+        pantalla.blit(texto_etiqueta, rect_etiqueta)
 
 def dibujar_tablero():
     """Dibuja el tablero completo con el diseño moderno"""
@@ -644,6 +653,7 @@ def dibujar_tablero():
     # Dibujar todas las posiciones del tablero
     for pos in range(1, 16):
         x, y = POSICIONES[pos]
+        etiqueta = POSICIONES_ETIQUETAS[pos]
         tiene_ficha = not juego.modo_seleccion and juego.raiz and juego.raiz[pos] == 1
         
         estado = 'normal'
@@ -673,7 +683,7 @@ def dibujar_tablero():
             juego.posicion_hover = pos
         
         # Dibujar la clavija/hueco
-        dibujar_clavija_moderna(x, y, 25, tiene_ficha, estado, pos)
+        dibujar_clavija_moderna(x, y, 25, tiene_ficha, estado, etiqueta)
     
     # Dibujar información del juego si no estamos en modo selección
     if not juego.modo_seleccion:
@@ -704,9 +714,9 @@ def dibujar_tablero():
         
         # Mostrar información de la ficha seleccionada
         if juego.ficha_seleccionada and juego.movimientos_validos:
-            instruccion = f"Ficha {juego.ficha_seleccionada} seleccionada - {len(juego.movimientos_validos)} movimientos posibles"
+            instruccion = f"Ficha {POSICIONES_ETIQUETAS[juego.ficha_seleccionada]} seleccionada - {len(juego.movimientos_validos)} movimientos posibles"
         elif juego.ficha_seleccionada:
-            instruccion = f"Ficha {juego.ficha_seleccionada} seleccionada - Sin movimientos válidos"
+            instruccion = f"Ficha {POSICIONES_ETIQUETAS[juego.ficha_seleccionada]} seleccionada - Sin movimientos válidos"
         elif not juego.juego_terminado and not juego.resolviendo:
             instruccion = "Haz clic en una ficha amarilla para seleccionarla"
         else:
@@ -790,31 +800,31 @@ while ejecutando:
                             if juego.raiz[posicion_clic] == 1:
                                 juego.ficha_seleccionada = posicion_clic
                                 juego.movimientos_validos = juego.obtener_movimientos_desde_posicion(posicion_clic)
-                                print(f"\n👆 FICHA {posicion_clic} SELECCIONADA")
+                                print(f"\n👆 FICHA {POSICIONES_ETIQUETAS[posicion_clic]} SELECCIONADA")
                                 if juego.movimientos_validos:
                                     print(f"   Movimientos disponibles: {len(juego.movimientos_validos)}")
                                     for i, (desde, sobre, hasta) in enumerate(juego.movimientos_validos, 1):
-                                        print(f"   {i}. Saltar ficha {sobre} → posición {hasta}")
+                                        print(f"   {i}. Saltar ficha {POSICIONES_ETIQUETAS[sobre]} → posición {POSICIONES_ETIQUETAS[hasta]}")
                                 else:
                                     print("   ❌ Sin movimientos válidos")
                             else:
-                                print(f"\n❌ No hay ficha en posición {posicion_clic}")
+                                print(f"\n❌ No hay ficha en posición {POSICIONES_ETIQUETAS[posicion_clic]}")
                         else:
                             # Ya hay una ficha seleccionada
                             if posicion_clic == juego.ficha_seleccionada:
                                 # Deseleccionar
-                                print(f"\n↩️  Ficha {juego.ficha_seleccionada} deseleccionada")
+                                print(f"\n↩️  Ficha {POSICIONES_ETIQUETAS[juego.ficha_seleccionada]} deseleccionada")
                                 juego.ficha_seleccionada = None
                                 juego.movimientos_validos = []
                             elif juego.raiz[posicion_clic] == 1:
                                 # Seleccionar otra ficha
                                 juego.ficha_seleccionada = posicion_clic
                                 juego.movimientos_validos = juego.obtener_movimientos_desde_posicion(posicion_clic)
-                                print(f"\n👆 FICHA {posicion_clic} SELECCIONADA")
+                                print(f"\n👆 FICHA {POSICIONES_ETIQUETAS[posicion_clic]} SELECCIONADA")
                                 if juego.movimientos_validos:
                                     print(f"   Movimientos disponibles: {len(juego.movimientos_validos)}")
                                     for i, (desde, sobre, hasta) in enumerate(juego.movimientos_validos, 1):
-                                        print(f"   {i}. Saltar ficha {sobre} → posición {hasta}")
+                                        print(f"   {i}. Saltar ficha {POSICIONES_ETIQUETAS[sobre]} → posición {POSICIONES_ETIQUETAS[hasta]}")
                                 else:
                                     print("   ❌ Sin movimientos válidos")
                             else:
